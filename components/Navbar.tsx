@@ -22,7 +22,7 @@ const Navbar = () => {
     } catch (e) {
       console.error(`Puter sign in failed: ${e}`);
     }
-  };
+  }; 
 
   return (
     <header className="navbar">
