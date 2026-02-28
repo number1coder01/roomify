@@ -43,7 +43,7 @@ export default function Home() {
         return false;
       }
       // pre-appending the new item into the previous state of the project
-      setProjects((prev) => [newItem, ...prev]);
+      setProjects((prev) => [saved, ...prev]);
 
       navigate(`/visualizer/${newId}`, {
         state: {
