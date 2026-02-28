@@ -4,6 +4,7 @@ export const HOSTING_DOMAIN_SUFFIX = ".puter.site";
 export const isHostedUrl = (value: unknown): value is string =>
     typeof value === "string" && value.includes(HOSTING_DOMAIN_SUFFIX);
 
+// template string for our subdomain(unique slug(string ID))
 export const createHostingSlug = () =>
     `roomify-${Date.now().toString(36)}-${Math.random()
         .toString(36)

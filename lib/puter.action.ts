@@ -3,16 +3,15 @@ import {
   getOrCreateHostingConfig,
   uploadImageToHosting,
 } from "./puter.hosting";
-import { PUTER_WORKER_URL } from "./constants";
+// import { PUTER_WORKER_URL } from "./constants";
 import { isHostedUrl } from "./utils";
 // import {getOrCreateHostingConfig, uploadImageToHosting} from "./puter.hosting";
 // import {isHostedUrl} from "./utils";
 // import {PUTER_WORKER_URL} from "./constants";
 
+// auth functions
 export const signIn = async () => await puter.auth.signIn();
-
 export const signOut = () => puter.auth.signOut();
-
 export const getCurrentUser = async () => {
   try {
     return await puter.auth.getUser();
@@ -21,18 +20,18 @@ export const getCurrentUser = async () => {
   }
 };
 
-export const createProject = async ({
-  item,
-  visibility = "private",
-}: CreateProjectParams): Promise<DesignItem | null | undefined> => {
-  if (!PUTER_WORKER_URL) {
-    console.warn("Missing VITE_PUTER_WORKER_URL; skip history fetch;");
-    return null;
-  }
+// will take in project info as parameters so that we can move all the data to AI
+// so i/p = all info + img and function -> store inside the KV database
+export const createProject = async (
+  // using the functions we created in actions.tsx we create a project & prepare hosted images URLs
+  { item }: CreateProjectParams,
+): Promise<DesignItem | null | undefined> => {
+  //a promise that results into a design pattern
+
   const projectId = item.id;
 
   const hosting = await getOrCreateHostingConfig();
-
+  // Uploads original image
   const hostedSource = projectId
     ? await uploadImageToHosting({
         hosting,
@@ -41,7 +40,7 @@ export const createProject = async ({
         label: "source",
       })
     : null;
-
+  // Uploads AI generated / rendered image
   const hostedRender =
     projectId && item.renderedImage
       ? await uploadImageToHosting({
@@ -55,9 +54,9 @@ export const createProject = async ({
   const resolvedSource =
     hostedSource?.url ||
     (isHostedUrl(item.sourceImage) ? item.sourceImage : "");
-
-  if (!resolvedSource) {
-    console.warn("Failed to host source image, skipping save.");
+  
+    if (!resolvedSource) {
+    console.warn("Failed to host source image , skipping save.");
     return null;
   }
 
@@ -66,7 +65,14 @@ export const createProject = async ({
     : item.renderedImage && isHostedUrl(item.renderedImage)
       ? item.renderedImage
       : undefined;
+  // Notice difference:
+  // resolvedSource falls back to ''
+  // resolvedRender falls back to undefined
+  // That’s intentional.
+  // Source image is mandatory.
+  // Render image is optional.
 
+  // destructuring so that DesignItem ban sake
   const {
     sourcePath: _sourcePath,
     renderedPath: _renderedPath,
@@ -74,6 +80,7 @@ export const createProject = async ({
     ...rest
   } = item;
 
+  // useful wali lenge for DesignItem
   const payload = {
     ...rest,
     sourceImage: resolvedSource,
@@ -81,26 +88,8 @@ export const createProject = async ({
   };
 
   try {
-    // Calling the puter worker to store project in kv
-    const response = await puter.workers.exec(
-      `${PUTER_WORKER_URL}/api/projects/save`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          project: payload,
-          visibility,
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      console.error("failed to save the project", await response.text());
-      return null;
-    }
-
-    const data = (await response.json()) as { project?: DesignItem | null };
-
-    return data?.project ?? null;
+    // Calling puter worker to store porject in kv
+    return payload;
   } catch (e) {
     console.log("Failed to save project", e);
     return null;
