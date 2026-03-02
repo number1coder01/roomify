@@ -109,9 +109,11 @@ export const createProject = async (
         }),
       },
     );
-    console.log("SAVE RESPONSE STATUS:", response.status);
-    console.log("SAVE RESPONSE OK:", response.ok);
-    console.log("SAVE RESPONSE TEXT:", await response.clone().text());
+    if (import.meta.env.DEV) {
+      console.log("SAVE RESPONSE STATUS:", response.status);
+      console.log("SAVE RESPONSE OK:", response.ok);
+      console.log("SAVE RESPONSE TEXT:", await response.clone().text());
+    }
     if (!response.ok) {
       console.error("Failed to save the project", await response.text());
       return null;
@@ -173,7 +175,9 @@ export const getProjectById = async ({ id }: { id: string }) => {
       { method: "GET" },
     );
 
-    console.log("Fetch project response:", response);
+    if (import.meta.env.DEV) {
+      console.log("Fetch project response:", response);
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -185,7 +189,9 @@ export const getProjectById = async ({ id }: { id: string }) => {
       project?: DesignItem | null;
     };
 
-    console.log("Fetched project data:", data);
+    if (import.meta.env.DEV) {
+      console.log("Fetched project data:", data);
+    }
 
     return data?.project ?? null;
   } catch (error) {

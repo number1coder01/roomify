@@ -11,7 +11,7 @@ import {
   ReactCompareSlider,
   ReactCompareSliderImage,
 } from "react-compare-slider";
-import { Box, Download, RefreshCcw, Share2, X } from "lucide-react";
+import { AlertCircle, Box, Download, RefreshCcw, Share2, X } from "lucide-react";
 import Button from "components/ui/Buttons";
 
 const visualizerId = () => {
@@ -24,6 +24,7 @@ const visualizerId = () => {
 
   const [project, setProject] = useState<DesignItem | null>(null);
   const [isProjectLoading, setIsProjectLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [currentImage, setCurrentImage] = useState<string | null>(null);
@@ -93,8 +94,16 @@ const visualizerId = () => {
 
       if (!isMounted) return;
 
+      if (!fetchedProject) {
+        setError("Project not found. It may have been deleted or the ID is incorrect.");
+        setIsProjectLoading(false);
+        hasInitialGenerated.current = false;
+        return;
+      }
+
+      setError(null);
       setProject(fetchedProject);
-      setCurrentImage(fetchedProject?.renderedImage || null);
+      setCurrentImage(fetchedProject.renderedImage || null);
       setIsProjectLoading(false);
       hasInitialGenerated.current = false;
     };
@@ -123,6 +132,36 @@ const visualizerId = () => {
     hasInitialGenerated.current = true;
     void runGeneration(project);
   }, [project, isProjectLoading]);
+
+  if (error) {
+    return (
+      <div className="visualizer flex flex-col items-center justify-center h-screen bg-slate-950 text-white p-6">
+        <div className="max-w-md w-full bg-slate-900 rounded-3xl p-10 border border-slate-800 shadow-2xl text-center space-y-8">
+          <div className="flex justify-center">
+            <div className="p-4 bg-red-500/10 rounded-2xl">
+              <AlertCircle className="w-12 h-12 text-red-500" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h2 className="text-2xl font-bold tracking-tight">Project Not Found</h2>
+            <p className="text-slate-400 leading-relaxed">
+              {error}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 pt-4 border-t border-slate-800/50">
+            <Button onClick={() => window.location.reload()} variant="primary" fullWidth>
+              <RefreshCcw className="w-4 h-4 mr-2" /> Try Again
+            </Button>
+            <Button onClick={handleBack} variant="ghost" fullWidth>
+              Go Back Home
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="visualizer">
@@ -155,7 +194,7 @@ const visualizerId = () => {
               >
                 <Download className="w-4 h-4 mr-2" /> Export
               </Button>
-              <Button size="sm" onClick={() => {}} className="share">
+              <Button size="sm" onClick={() => { }} className="share">
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
               </Button>

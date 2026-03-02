@@ -7,7 +7,7 @@ import { useNavigate } from "react-router";
 import { useRef, useState } from "react";
 import { createProject } from "lib/puter.action";
 
-export function meta({}: Route.MetaArgs) {
+export function meta(_args: Route.MetaArgs) {
   return [
     { title: "New React Router App" },
     { name: "description", content: "Welcome to React Router!" },
@@ -17,13 +17,13 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<DesignItem[]>([]);
-  const isCreatingProjectRef = useRef(false) ; 
+  const isCreatingProjectRef = useRef(false);
 
   const handleUploadComplete = async (base64Image: string) => {
-    try {
-      if (isCreatingProjectRef.current) return false;
-      isCreatingProjectRef.current = true;
+    if (isCreatingProjectRef.current) return false;
+    isCreatingProjectRef.current = true;
 
+    try {
       const newId = Date.now().toString();
       const name = `Residence ${newId}`;
       // createProject wala function used here
@@ -56,10 +56,13 @@ export default function Home() {
       });
 
       return true;
+    } catch (error) {
+      console.error("Error in handleUploadComplete:", error);
+      return false;
     } finally {
       isCreatingProjectRef.current = false;
-  }
-}
+    }
+  };
   // useEffect(() => {
   //   const fetchProjects = async () => {
   //     const items = await getProjects();
