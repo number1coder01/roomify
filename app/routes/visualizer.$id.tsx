@@ -98,7 +98,21 @@ const visualizerId = () => {
   // }, [id]);
 
 useEffect(() => {
-  if (!initialImage || !id) return;
+  if (!id) {
+    setProject(null);
+    setCurrentImage(null);
+    setIsProjectLoading(false);
+    hasInitialGenerated.current = false;
+    return;
+  }
+
+  if (!initialImage) {
+    setProject(null);
+    setCurrentImage(null);
+    setIsProjectLoading(false);
+    hasInitialGenerated.current = false;
+    return;
+  }
 
   const newProject: DesignItem = {
     id,
@@ -108,6 +122,8 @@ useEffect(() => {
     timestamp: Date.now(),
   };
 
+  hasInitialGenerated.current = false;
+  setCurrentImage(null);
   setProject(newProject);
   setIsProjectLoading(false);
 }, [initialImage, id, name]);
