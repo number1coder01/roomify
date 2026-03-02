@@ -30,7 +30,7 @@ export const createProject = async (
   //a promise that results into a design pattern
 
   if (!PUTER_WORKER_URL) {
-    console.warn("Missing VITE_PUTER_WORKER_URL; skip history fetch;");
+    console.warn("Missing VITE_PUTER_WORKER_URL; skipping project creation;");
     return null;
   }
   const projectId = item.id;

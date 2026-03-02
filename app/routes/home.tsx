@@ -4,10 +4,10 @@ import Button from "components/ui/Buttons";
 import { ArrowRight, ArrowUpRight, Clock, Layers } from "lucide-react";
 import Upload from "components/Upload";
 import { useNavigate } from "react-router";
-import { useRef, useState } from "react";
-import { createProject } from "lib/puter.action";
+import { useEffect, useRef, useState } from "react";
+import { createProject, getProjects } from "lib/puter.action";
 
-export function meta({}: Route.MetaArgs) {
+export function meta({ }: Route.MetaArgs) {
   return [
     { title: "New React Router App" },
     { name: "description", content: "Welcome to React Router!" },
@@ -17,7 +17,7 @@ export function meta({}: Route.MetaArgs) {
 export default function Home() {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<DesignItem[]>([]);
-  const isCreatingProjectRef = useRef(false) ; 
+  const isCreatingProjectRef = useRef(false);
 
   const handleUploadComplete = async (base64Image: string) => {
     try {
@@ -58,17 +58,17 @@ export default function Home() {
       return true;
     } finally {
       isCreatingProjectRef.current = false;
+    }
   }
-}
-  // useEffect(() => {
-  //   const fetchProjects = async () => {
-  //     const items = await getProjects();
+  useEffect(() => {
+    const fetchProjects = async () => {
+      const items = await getProjects();
 
-  //     setProjects(items);
-  //   };
+      setProjects(items);
+    };
 
-  // fetchProjects();
-  // } , []);
+    fetchProjects();
+  }, []);
 
   return (
     <div className="home">
