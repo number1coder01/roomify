@@ -20,10 +20,10 @@ export default function Home() {
   const isCreatingProjectRef = useRef(false);
 
   const handleUploadComplete = async (base64Image: string) => {
-    try {
-      if (isCreatingProjectRef.current) return false;
-      isCreatingProjectRef.current = true;
+    if (isCreatingProjectRef.current) return false;
+    isCreatingProjectRef.current = true;
 
+    try {
       const newId = Date.now().toString();
       const name = `Residence ${newId}`;
       // createProject wala function used here
@@ -56,10 +56,14 @@ export default function Home() {
       });
 
       return true;
+    } catch (error) {
+      console.error("Error in handleUploadComplete:", error);
+      return false;
     } finally {
       isCreatingProjectRef.current = false;
     }
-  }
+  };
+
   useEffect(() => {
     const fetchProjects = async () => {
       const items = await getProjects();
