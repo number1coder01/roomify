@@ -1,7 +1,12 @@
 import { generate3DView } from "lib/ai.action";
-import { createProject } from "lib/puter.action";
+import { createProject, getProjectById } from "lib/puter.action";
 import React, { useEffect, useRef, useState } from "react";
-import { useLocation, useNavigate, useParams } from "react-router";
+import {
+  useLocation,
+  useNavigate,
+  useOutletContext,
+  useParams,
+} from "react-router";
 import {
   ReactCompareSlider,
   ReactCompareSliderImage,
@@ -13,9 +18,8 @@ const visualizerId = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   // to get access to the state that we passed into the new page
-  const location = useLocation();
-  const { initialImage, name } = location.state || {};
 
+  const { userId } = useOutletContext<AuthContext>();
   const hasInitialGenerated = useRef(false);
 
   const [project, setProject] = useState<DesignItem | null>(null);
@@ -45,22 +49,25 @@ const visualizerId = () => {
       if (result.renderedImage) {
         setCurrentImage(result.renderedImage);
 
-        // update the project with the rendered image ->
-        // const updatedItem = {
-        //     ...item,
-        //     renderedImage: result.renderedImage,
-        //     renderedPath: result.renderedPath,
-        //     timestamp: Date.now(),
-        //     ownerId: item.ownerId ?? userId ?? null,
-        //     isPublic: item.isPublic ?? false,
-        // }
+        // update the project with the rendered image -> agar yeh nahi karenge toh image will stay as a blob and each time you reload the image is going to generate again and again
+        const updatedItem = {
+          ...item,
+          renderedImage: result.renderedImage,
+          renderedPath: result.renderedPath,
+          timestamp: Date.now(),
+          ownerId: item.ownerId ?? userId ?? null,
+          isPublic: item.isPublic ?? false,
+        };
 
-        // const saved = await createProject({ item: updatedItem, visibility: "private" })
+        const saved = await createProject({
+          item: updatedItem,
+          visibility: "private",
+        });
 
-        // if(saved) {
-        //     setProject(saved);
-        //     setCurrentImage(saved.renderedImage || result.renderedImage);
-        // }
+        if (saved) {
+          setProject(saved);
+          setCurrentImage(saved.renderedImage || result.renderedImage);
+        }
       }
     } catch (error) {
       console.error("Generation failed: ", error);
@@ -69,82 +76,53 @@ const visualizerId = () => {
     }
   };
 
-  // useEffect(() => {
-  //     let isMounted = true;
+  // Load Project From Storage -> “When we enter /visualizer/:id, fetch that project from storage.”
+  useEffect(() => {
+    // this is there to prevent React state update on unmounted component
+    let isMounted = true;
 
-  //     const loadProject = async () => {
-  //         if (!id) {
-  //             setIsProjectLoading(false);
-  //             return;
-  //         }
-
-  //         setIsProjectLoading(true);
-
-  //         const fetchedProject = await getProjectById({ id });
-
-  //         if (!isMounted) return;
-
-  //         setProject(fetchedProject);
-  //         setCurrentImage(fetchedProject?.renderedImage || null);
-  //         setIsProjectLoading(false);
-  //         hasInitialGenerated.current = false;
-  //     };
-
-  //     loadProject();
-
-  //     return () => {
-  //         isMounted = false;
-  //     };
-  // }, [id]);
-
-useEffect(() => {
-  if (!id) {
-    setProject(null);
-    setCurrentImage(null);
-    setIsProjectLoading(false);
-    hasInitialGenerated.current = false;
-    return;
-  }
-
-  if (!initialImage) {
-    setProject(null);
-    setCurrentImage(null);
-    setIsProjectLoading(false);
-    hasInitialGenerated.current = false;
-    return;
-  }
-
-  const newProject: DesignItem = {
-    id,
-    name: name || `Residence ${id}`,
-    sourceImage: initialImage,
-    renderedImage: null,
-    timestamp: Date.now(),
-  };
-
-  hasInitialGenerated.current = false;
-  setCurrentImage(null);
-  setProject(newProject);
-  setIsProjectLoading(false);
-}, [initialImage, id, name]);
-
-useEffect(() => {
-    if (
-        isProjectLoading ||
-        hasInitialGenerated.current ||
-        !project?.sourceImage
-    )
+    const loadProject = async () => {
+      if (!id) {
+        setIsProjectLoading(false);
         return;
+      }
+
+      setIsProjectLoading(true);
+
+      const fetchedProject = await getProjectById({ id });
+
+      if (!isMounted) return;
+
+      setProject(fetchedProject);
+      setCurrentImage(fetchedProject?.renderedImage || null);
+      setIsProjectLoading(false);
+      hasInitialGenerated.current = false;
+    };
+
+    loadProject();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+  //Trigger AI Generation If Needed -> “If project is loaded AND it doesn’t have a rendered image → generate one.”
+  useEffect(() => {
+    if (
+      isProjectLoading ||
+      hasInitialGenerated.current ||
+      !project?.sourceImage
+    )
+      return;
 
     if (project.renderedImage) {
-        setCurrentImage(project.renderedImage);
-        hasInitialGenerated.current = true;
-        return;
+      setCurrentImage(project.renderedImage);
+      hasInitialGenerated.current = true;
+      return;
     }
 
     hasInitialGenerated.current = true;
     void runGeneration(project);
-}, [project, isProjectLoading]);
+  }, [project, isProjectLoading]);
 
   return (
     <div className="visualizer">

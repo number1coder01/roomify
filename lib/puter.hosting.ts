@@ -9,7 +9,7 @@ import {
   isHostedUrl,
 } from "./utils";
 // yeh subdomain contain karega -> subdomain is a space inside the
-// KV jaha humara yeh roomify ka imagae data store hoga
+// KV jaha humara yeh roomify ka image data store hoga
 type HostingConfig = { subdomain: string };
 // image ka url
 type HostedAsset = { url: string };
@@ -57,7 +57,7 @@ export const uploadImageToHosting = async ({
   if (isHostedUrl(url)) return { url };
 
   try {
-    // resolve the transformation 
+    // resolve the transformation
     // of the image from png to url
 
     // STEP 1 -> Converts image to PNG blob
